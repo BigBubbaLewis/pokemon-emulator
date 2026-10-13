@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pokémon Emerald · GBA</title><link rel="icon" href="emerald.ico">
+<style>
+:root{color-scheme:dark;--bg:#0c1712;--panel:#1b3025;--accent:#65d998;--line:#355442}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}body{font:15px system-ui,Segoe UI,sans-serif;background:var(--bg);color:#f4fff8}
+button,select{font:inherit}button{background:#253f30;border:1px solid #416951;color:#f4fff8;border-radius:9px;padding:9px 13px;cursor:pointer}button:hover{background:#365a41}button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}button.active{background:var(--accent);color:#102018;font-weight:700}button:disabled{opacity:.45;cursor:not-allowed}
+.app{display:flex;flex-direction:column;height:100dvh;max-width:1160px;margin:auto;padding:12px;gap:10px;min-height:0}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}header .brand{display:flex;align-items:center;gap:11px;min-width:0}header img{width:42px;height:42px;object-fit:contain}h1{font-size:clamp(17px,2.4vw,24px);margin:0;color:var(--accent)}.sub{font-size:12px;color:#a5c0ad}nav{display:flex;align-items:center;gap:7px;flex-wrap:wrap}nav button{font-size:13px;padding:8px 11px}
+.workspace{flex:1;display:flex;justify-content:center;align-items:stretch;min-height:0;min-width:0}#screen{width:min(100%,calc((100dvh - 112px)*1.32));max-width:100%;height:100%;min-height:0;position:relative;border:1px solid var(--line);border-radius:12px;background:#000;overflow:hidden;display:flex}#game{flex:1;min-width:0;min-height:0;width:100%;height:100%}
+#fullscreenTurbo{display:none;position:absolute;right:16px;top:15px;z-index:2147483640;background:#133923e8;box-shadow:0 3px 15px #0008}#screen:fullscreen{width:100vw;height:100vh;border:0;border-radius:0;max-width:none}#screen:fullscreen #fullscreenTurbo{display:block}#screen:fullscreen #game{height:100%;width:100%}
+footer{font-size:11px;text-align:center;color:#90ab9a;flex-shrink:0;min-height:14px}
+dialog{color:white;background:#15291e;border:1px solid #4a7458;border-radius:16px;width:min(530px,calc(100vw - 24px));max-height:min(660px,calc(100dvh - 28px));padding:0;box-shadow:0 20px 80px #000b}dialog::backdrop{background:#000b;backdrop-filter:blur(3px)}.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}h2{font-size:19px;margin:0;color:var(--accent)}.modal-body{overflow-y:auto;max-height:calc(100dvh - 114px);padding:15px 18px 20px}.group{background:#203b2a;border:1px solid #345440;border-radius:12px;padding:14px;margin-bottom:12px}h3{margin:0 0 9px;font-size:15px}.group p{margin:8px 0;font-size:13px;color:#bed4c4;line-height:1.5}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0}.row select{background:#0d2116;border:1px solid #55735d;color:white;border-radius:8px;padding:8px}.note{font-size:12px;color:#a1bdaa}#status{margin-top:8px;color:#b1d9b9;font-size:12px}.game-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;background:#203b2a;border:1px solid #345440;border-radius:10px;margin:9px 0}.game-item small{display:block;color:#a9c6b1;margin-top:3px}.game-item button{white-space:nowrap}@media(max-width:590px){.app{padding:6px;gap:6px}header img{width:32px;height:32px}.sub,footer{display:none}nav button{padding:6px 8px;font-size:12px}#screen{width:100%}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand"><img src="emerald.ico" alt=""><div><h1 id="gameTitle">Pokémon Emerald</h1><div class="sub">Game Boy Advance · Emulator</div></div></div>
+  <nav aria-label="Emulator tools">
+    <button id="turbo" type="button" title="Toggle fast forward">Fast Forward</button>
+    <button id="libraryOpen" type="button">Library</button>
+    <button id="savesOpen" type="button">Save Files</button>
+    <button id="settingsOpen" type="button">Settings</button>
+    <button id="fullscreen" type="button">Fullscreen</button>
+  </nav>
+</header>
+<div class="workspace"><div id="screen"><div id="game"></div><button id="fullscreenTurbo" type="button">Fast Forward</button></div></div>
+<footer id="hint">Settings and Library open as popups · Press Esc to leave fullscreen · EmulatorJS toolbar is inside the game</footer>
+</div>
+<dialog id="settingsDialog" aria-labelledby="settingsTitle"><div class="modal-head"><h2 id="settingsTitle">Settings</h2><button class="close" data-close="settingsDialog">✕ Close</button></div><div class="modal-body">
+<div class="group"><h3>Game speed</h3><div class="row"><label for="speed">Fast-forward speed</label><select id="speed"><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option><option value="4">4×</option><option value="5">5×</option><option value="8">8×</option></select></div><p>Use the Fast Forward button above the game or while fullscreen. Your speed choice is saved for next time.</p><p id="turboStatus" class="note"></p></div>
+<div class="group"><h3>Audio</h3><p>The emulator already has a volume slider and mute button in its own toolbar, so there is no duplicate audio setting here.</p></div>
+<div class="group"><h3>Video</h3><p>The game automatically fits inside your browser window without page scrolling. Use the Fullscreen button for a larger view. Shader and display settings are in EmulatorJS's built-in settings menu.</p></div>
+<div class="group"><h3>Keyboard and controller</h3><p>Open EmulatorJS's built-in gamepad/controller configuration in its toolbar to change keyboard mappings, controller bindings, or other input settings. Xbox and PlayStation controllers supported by your browser may work; press a button to activate a connected controller.</p><button id="controllerCheck">Detect controllers</button><p id="controllerResult" class="note">No check yet</p></div>
+<div class="group"><h3>Game data and cheats</h3><p>Use the Save Files button for help with importing/exporting .sav saves or .state snapshots. Cheats and screenshots are available in EmulatorJS’s toolbar.</p></div>
+</div></dialog>
+<dialog id="savesDialog" aria-labelledby="savesTitle"><div class="modal-head"><h2 id="savesTitle">Save Manager</h2><button class="close" data-close="savesDialog">✕ Close</button></div><div class="modal-body">
+<div class="group"><h3>Regular game saves (.sav / .srm)</h3><p>These are made by selecting SAVE inside Pokémon Emerald. To import an existing regular save, use the EmulatorJS toolbar inside the game and select <strong>Load Save Files</strong>. To download a backup, use <strong>Save Save Files</strong>. After importing, restart the game from the emulator toolbar, then choose Continue.</p><p>Always back up your current save before importing another one. Make sure the save belongs to the same game.</p></div>
+<div class="group"><h3>Emulator snapshots (.state)</h3><p>These are instant snapshots, not ordinary Pokémon saves. Use the emulator's <strong>Save State</strong> / <strong>Load State</strong> controls for these. A standalone mGBA save state may not be compatible with EmulatorJS.</p></div>
+<div class="group"><h3>Is import failing?</h3><p id="saveHelp">Check whether your file ends in .sav, .srm, or .state, and whether it came from mGBA or this website. Those details determine the correct import method.</p><p class="note">This manager uses the emulator's built-in import/export tools rather than replacing them with an incompatible file loader.</p></div>
+</div></dialog>
+<dialog id="libraryDialog" aria-labelledby="libraryTitle"><div class="modal-head"><h2 id="libraryTitle">GBA Game Library</h2><button class="close" data-close="libraryDialog">✕ Close</button></div><div class="modal-body"><p class="note">Emerald is included. You can add your own .gba files, which are stored locally in this browser. No ROMs are uploaded to a server.</p><div id="games"></div><div class="group"><h3>Add your GBA game</h3><input id="addRom" type="file" accept=".gba,application/octet-stream"><div id="status" role="status"></div></div></div></dialog>
+<script>
+const $=id=>document.getElementById(id);
+const speedChoices=[1.5,2,3,4,5,8];
+let speed=Number(localStorage.getItem('gba-speed')||3);
+if(!speedChoices.includes(speed))speed=3;
+$('speed').value=String(speed);
+let turboOn=false;
+const database=new Promise((resolve,reject)=>{
+  const request=indexedDB.open('gba-personal-library',1);
+  request.onupgradeneeded=()=>request.result.createObjectStore('roms',{keyPath:'id'});
+  request.onsuccess=()=>resolve(request.result);
+  request.onerror=()=>reject(request.error);
+});
+async function dbAll(){const db=await database;return new Promise((res,rej)=>{const tx=db.transaction('roms','readonly');const r=tx.objectStore('roms').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function dbGet(id){const db=await database;return new Promise((res,rej)=>{const r=db.transaction('roms','readonly').objectStore('roms').get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function dbPut(record){const db=await database;return new Promise((res,rej)=>{const tx=db.transaction('roms','readwrite');tx.objectStore('roms').put(record);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}
+function hashGame(id){let h=2166136261;for(let i=0;i<id.length;i++){h=Math.imul(h^id.charCodeAt(i),16777619)}return h>>>0}
+function coreFunctions(){
+  const e=window.EJS_emulator;
+  return e?.gameManager?.functions||e?.gameManager||e?.functions||null;
+}
+function applySpeed(){const f=coreFunctions();if(typeof f?.setFastForwardRatio==='function'){f.setFastForwardRatio(speed);return true}return false}
+function updateTurboUI(){for(const id of ['turbo','fullscreenTurbo']){$(id).classList.toggle('active',turboOn);$(id).textContent=turboOn?'Fast Forward: ON':'Fast Forward'}}
+function toggleTurbo(){
+  const f=coreFunctions();
+  if(!f||typeof f.toggleFastForward!=='function'){$('turboStatus').textContent='Emulator is still loading, or fast-forward API is unavailable.';return}
+  applySpeed();
+  try{f.toggleFastForward(turboOn?0:1);turboOn=!turboOn;updateTurboUI();$('turboStatus').textContent=turboOn?`Fast Forward enabled (${speed}× selected)`:'Fast Forward disabled'}
+  catch(e){$('turboStatus').textContent='Could not change game speed: '+e.message}
+}
+$('turbo').onclick=toggleTurbo;
+$('fullscreenTurbo').onclick=toggleTurbo;
+$('speed').onchange=e=>{speed=Number(e.target.value);localStorage.setItem('gba-speed',String(speed));$('turboStatus').textContent=applySpeed()?`Fast-forward speed set to ${speed}×`:`${speed}× saved; it will apply when the emulator is ready.`};
+$('fullscreen').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else $('screen').requestFullscreen().catch(e=>alert(e.message))};
+$('settingsOpen').onclick=()=>$('settingsDialog').showModal();
+$('savesOpen').onclick=()=>$('savesDialog').showModal();
+$('libraryOpen').onclick=async()=>{await drawLibrary();$('libraryDialog').showModal()};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
+$('controllerCheck').onclick=()=>{const pads=navigator.getGamepads?Array.from(navigator.getGamepads()).filter(Boolean):[];$('controllerResult').textContent=pads.length?pads.map(p=>p.id).join(', '):'No controller detected. Try pressing a button on your connected controller.'};
+async function drawLibrary(){const list=$('games');list.replaceChildren();const games=[{id:'emerald',name:'Pokémon Emerald',type:'Included ROM'},...(await dbAll()).map(r=>({id:r.id,name:r.name,type:'Added game'}))];for(const g of games){const item=document.createElement('div');item.className='game-item';const txt=document.createElement('div');const strong=document.createElement('strong');strong.textContent=g.name;const small=document.createElement('small');small.textContent=g.type;txt.append(strong,small);const btn=document.createElement('button');btn.textContent=selectedGame===g.id?'Playing':'Play';btn.disabled=selectedGame===g.id;btn.onclick=()=>{localStorage.setItem('gba-selected',g.id);location.reload()};item.append(txt,btn);list.append(item)}}
+$('addRom').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;if(!/\.gba$/i.test(file.name)){$('status').textContent='Please choose a .gba file.';return}try{$('status').textContent='Adding game locally…';const name=file.name.replace(/\.gba$/i,'');const id='user:'+file.name.toLowerCase();await dbPut({id,name,blob:file});$('status').textContent=`Added ${name}! Click Play in the library.`;await drawLibrary()}catch(err){$('status').textContent='Could not save this game. Your browser might be out of storage: '+err.message}};
+const selectedGame=localStorage.getItem('gba-selected')||'emerald';
+// EmulatorJS's global configuration is created before loading its script.
+window.EJS_player='#game';window.EJS_core='gba';window.EJS_pathtodata='https://cdn.emulatorjs.org/stable/data/';window.EJS_startOnLoaded=true;window.EJS_browserMode='desktop';window.EJS_color='#65d998';
+window.EJS_Buttons={settings:true,gamepad:true,cheat:true,volume:true,mute:true,fullscreen:false,saveState:true,loadState:true,quickSave:true,quickLoad:true,screenshot:true,playPause:true,restart:true,saveSavFiles:true,loadSavFiles:true};
+async function loadGame(){
+  let url='./PokemonEmerald.gba';let name='Pokemon Emerald';
+  if(selectedGame!=='emerald'){
+    try{const rom=await dbGet(selectedGame);if(rom){url=URL.createObjectURL(rom.blob);name=rom.name}else{localStorage.setItem('gba-selected','emerald')}}catch(e){console.error(e);localStorage.setItem('gba-selected','emerald')}
+  }
+  $('gameTitle').textContent=name;
+  window.EJS_gameName=name;
+  window.EJS_gameID=hashGame(selectedGame);
+  window.EJS_gameUrl=url;
+  const script=document.createElement('script');script.src=window.EJS_pathtodata+'loader.js';script.onerror=()=>{$('game').textContent='Cannot load EmulatorJS. Check your internet connection.'};document.body.append(script);
+  // EmulatorJS initializes asynchronously; retry speed setup until ready.
+  let tries=0;const check=setInterval(()=>{tries++;if(applySpeed()||tries>=90)clearInterval(check)},1000);
+}
+loadGame();
+</script>
+</body>
+</html>
