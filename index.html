@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GBA Game Hub | Choose a Game</title>
+<title>Retro Game Hub | Choose a Game</title>
 <link id="siteFavicon" rel="icon" type="image/svg+xml" href="./gba-icon.svg">
 
 <style>
@@ -234,6 +234,9 @@ kbd {
   width:100%;
   margin-bottom:12px;
 }
+.library-filters {display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.library-filters .library-search {flex:1;min-width:150px;margin:0}
+.console-guide p {border-bottom:1px solid var(--line);padding-bottom:8px}
 .game-grid {
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
@@ -313,10 +316,10 @@ kbd {
 <div class="app">
   <header>
     <div class="brand">
-      <img id="brandIcon" src="./gba-icon.svg" alt="Game Boy Advance">
+      <img id="brandIcon" src="./gba-icon.svg" alt="Retro gaming handheld">
       <div>
-        <h1 id="gameTitle">GBA Game Hub</h1>
-        <div class="subtitle">Game Boy Advance · Personal Game Hub</div>
+        <h1 id="gameTitle">Retro Game Hub</h1>
+        <div class="subtitle" id="consoleSubtitle">Classic consoles · Personal Game Hub</div>
       </div>
     </div>
 
@@ -336,7 +339,10 @@ kbd {
       <div id="homeScreen" class="home-screen">
         <div class="home-top"><div class="home-kicker">YOUR GAME COLLECTION</div><h2>Choose Your Adventure</h2>
         <p class="note">Pick a game to start. Enjoy your collection in a neutral retro-gaming hub.</p></div>
-        <input class="library-search" id="homeSearch" type="search" placeholder="Search your games..." aria-label="Search games">
+        <div class="library-filters">
+          <input class="library-search" id="homeSearch" type="search" placeholder="Search games or consoles..." aria-label="Search games">
+          <select id="homeSystem" aria-label="Filter games by console"><option value="">All consoles</option></select>
+        </div>
         <div id="homeMessage" class="status" role="status"></div>
         <div class="game-grid" id="homeGames"></div>
       </div>
@@ -378,7 +384,24 @@ kbd {
     <div class="group">
       <h3>🎨 Neutral Dark Theme</h3>
       <p>Every game uses the same neutral dark palette. Game artwork, header icons, and favicons still match the selected game.</p>
-      <p class="note">Add .gba files and optional matching .ico icons to the repository root or <code>games/</code> folder. On a push to <code>main</code>, GitHub Actions runs <code>node generate-library.cjs</code> and publishes the updated library to GitHub Pages. In repository Settings → Pages, set Source to GitHub Actions.</p>
+      <p class="note">Add supported game files and optional matching .ico icons to the repository root or <code>games/</code> folder. For archives or ambiguous formats, use a console folder such as <code>games/nes/</code>, <code>games/genesis/</code> or <code>games/psx/</code>. GitHub Actions generates the library and publishes it to GitHub Pages on a push to <code>main</code>.</p>
+    </div>
+
+    <div class="group">
+      <h3>🕹️ Console Support</h3>
+      <p>The game library selects the console automatically. Keep disc tracks next to their .cue file, or put the complete disc in one ZIP archive. Performance and game compatibility vary by console and device.</p>
+      <details><summary>Supported consoles and file types</summary><div id="consoleGuide" class="console-guide"></div></details>
+      <p class="note">PSP needs browser threading unavailable in this GitHub Pages setup. 3DS, GameCube, Wii, PlayStation 2 and newer consoles are not enabled by this site's existing stable emulator.</p>
+    </div>
+
+    <div class="group">
+      <h3>🧩 Console BIOS Files</h3>
+      <p>Some consoles require BIOS files. Choose the console, then select its BIOS files or a ZIP containing them with their original filenames. Files are remembered locally in this browser.</p>
+      <label for="biosSystem">Console</label>
+      <select id="biosSystem"></select>
+      <p id="biosHint" class="note"></p>
+      <input id="biosFiles" aria-label="Choose console BIOS files" type="file" accept=".bin,.rom,.img,.pce,.zip,.7z" multiple>
+      <div id="biosStatus" class="status" role="status"></div>
     </div>
 
     <div class="group">
@@ -407,9 +430,11 @@ kbd {
     <button data-close="libraryDialog">✕ Close</button>
   </div>
   <div class="modal-body">
-    <p class="note">Games listed here come from <code>games.json</code>. Add <code>.gba</code> files to the repository root or <code>games/</code> folder, with optional matching <code>.ico</code> icons. GitHub Actions generates the list before publishing to GitHub Pages.</p>
-    <input class="library-search" type="search" id="librarySearch"
-           placeholder="Search your games..." aria-label="Search games">
+    <p class="note">Games come from <code>games.json</code>. Add supported files to the repository root or <code>games/</code>; use console folders for .bin, .cue and archives. Matching .ico artwork still works. See Settings for the supported formats and BIOS setup.</p>
+    <div class="library-filters">
+      <input class="library-search" type="search" id="librarySearch" placeholder="Search games or consoles..." aria-label="Search games">
+      <select id="librarySystem" aria-label="Filter library by console"><option value="">All consoles</option></select>
+    </div>
     <div class="game-grid" id="games"></div>
     <div id="libraryStatus" class="status" role="status"></div>
   </div>
@@ -446,7 +471,7 @@ kbd {
         <ol>
           <li>Close this Save Manager.</li>
           <li>Select Restart in the EmulatorJS toolbar.</li>
-          <li>Choose Continue on the Pokémon title screen.</li>
+          <li>Load your saved progress from the game's menu.</li>
         </ol>
         <p class="note">Avoid saving the currently running game before restarting.</p>
         <button id="dismissNotice">Got It</button>
@@ -462,7 +487,7 @@ kbd {
       </p>
       <p>
         A save state from another emulator may not be compatible.
-        Regular Pokémon saves are generally better for transferring progress.
+        Regular in-game saves are generally better for transferring progress.
       </p>
     </div>
   </div>
@@ -470,11 +495,71 @@ kbd {
 
 <div id="toast" class="hidden" role="status"></div>
 
+<script src="./console-support.js"></script>
+<script src="./bios-support.js"></script>
 <script>
 "use strict";
 
 const $ = id => document.getElementById(id);
 const SPEEDS = [1.5,2,3,4,5,8];
+const CONSOLES = window.ConsoleSupport;
+const biosURLs = [];
+
+function gameConsole(game) {
+  const folderHint = game.file.split("/").slice(0,-1).find(part => CONSOLES.systemForHint(part));
+  return CONSOLES.resolveSystem(game.file,game.system || folderHint);
+}
+function fillConsoleOptions(id,systems) {
+  const select = $(id);
+  const previous = select.value;
+  select.replaceChildren();
+  if (id !== "biosSystem") {
+    const all = document.createElement("option");
+    all.value = ""; all.textContent = "All consoles"; select.append(all);
+  }
+  for (const system of systems) {
+    const option = document.createElement("option");
+    option.value = system.id; option.textContent = system.name; select.append(option);
+  }
+  if (systems.some(s => s.id === previous)) select.value = previous;
+}
+fillConsoleOptions("biosSystem",CONSOLES.systems);
+$("biosSystem").value = "psx";
+async function drawBiosStatus() {
+  const system = CONSOLES.systemForHint($("biosSystem").value);
+  if (!system) return;
+  $("biosHint").textContent = system.biosHint || "This console does not normally need a BIOS.";
+  const files = await window.ConsoleBios.getFiles(system.id);
+  // Ignore a stale result if the console changed while reading storage.
+  if ($("biosSystem").value !== system.id) return;
+  $("biosStatus").textContent = files.length ? "Available: " + files.map(f => f.name).join(", ") : "No BIOS files added for this console.";
+}
+$("biosSystem").onchange = drawBiosStatus;
+$("biosFiles").addEventListener("change",async event => {
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  const system = CONSOLES.systemForHint($("biosSystem").value);
+  const records = files.map(file => ({name:file.name,blob:file}));
+  let validated = false;
+  try {
+    if (files.some(file => !/\.(bin|rom|img|pce|zip|7z)$/i.test(file.name))) throw Error("Choose BIOS files or a ZIP/7z BIOS archive.");
+    // Validate before storing; no URLs are needed yet.
+    window.ConsoleBios.createConfig(system,records,() => "");
+    validated = true;
+    await window.ConsoleBios.saveFiles(system.id,records);
+    $("biosStatus").textContent = "BIOS files saved for " + system.name + ". Select your game to play.";
+  } catch(error) {
+    $("biosStatus").textContent = (validated ? "BIOS files are available for this session, but could not be remembered: " : "BIOS setup: ") + error.message;
+  }
+  event.target.value = "";
+});
+for (const system of CONSOLES.systems) {
+  const p = document.createElement("p");
+  p.textContent = system.name + " — " + system.extensions.map(ext => "."+ext).join(", ") +
+    "; folder: games/"+system.folders[0]+"/" + (system.biosHint ? ". " + system.biosHint : "");
+  $("consoleGuide").append(p);
+}
+window.addEventListener("pagehide",() => biosURLs.forEach(url => URL.revokeObjectURL(url)));
 
 // Keep existing settings and identifiers.
 let speed = Number(localStorage.getItem("gba-speed") || 3);
@@ -676,7 +761,7 @@ function openDialog(id) {
   $(id).showModal();
 }
 
-$("settingsOpen").onclick = () => openDialog("settingsDialog");
+$("settingsOpen").onclick = () => {openDialog("settingsDialog");drawBiosStatus();};
 $("savesOpen").onclick = () => openDialog("savesDialog");
 $("libraryOpen").onclick = async () => {
   openDialog("libraryDialog");
@@ -747,12 +832,16 @@ async function loadProjectLibrary() {
     for (const game of list) {
       if (!game || typeof game.id !== "string" ||
           typeof game.file !== "string" || typeof game.name !== "string") continue;
-      if (!/\.gba$/i.test(game.file)) continue;
+      const system = gameConsole(game);
+      if (!system) { console.warn("Unsupported console or ambiguous format:",game.file); continue; }
       if (seen.has(game.id)) continue;
       seen.add(game.id);
-      games.push(game);
+      games.push({...game,system:system.id});
     }
     bundledGames = games;
+    const available = CONSOLES.systems.filter(system => games.some(game => game.system === system.id));
+    fillConsoleOptions("homeSystem",available);
+    fillConsoleOptions("librarySystem",available);
   } catch(error) {
     libraryError = "Unable to read games.json: " + error.message + ". Check the GitHub Actions 'Generate game library' step, or run 'node generate-library.cjs' locally. Games can be in the repository root or games/ folder.";
     $("libraryStatus").textContent = libraryError;
@@ -762,15 +851,19 @@ async function loadProjectLibrary() {
 function gameIconPath(game) {
   return game.icon || fallbackGameIcon(game.name);
 }
+function visibleGames(search,system) {
+  const filter = search.trim().toLowerCase();
+  return bundledGames.filter(game => (!system || game.system === system) &&
+    (game.name + " " + gameConsole(game).name).toLowerCase().includes(filter));
+}
 async function drawLibrary() {
   const list = $("games");
   list.replaceChildren();
-  const filter = $("librarySearch").value.trim().toLowerCase();
-  const visible = bundledGames.filter(g => g.name.toLowerCase().includes(filter));
+  const visible = visibleGames($("librarySearch").value,$("librarySystem").value);
   if (!visible.length) {
     const p = document.createElement("p");
     p.className = "note";
-    p.textContent = "No matching games. Add .gba files to the repository root or games/ folder.";
+    p.textContent = "No matching games. Add supported game files to the repository root or games/<console>/ folder.";
     list.append(p);
     return;
   }
@@ -790,7 +883,7 @@ async function drawLibrary() {
     title.className = "game-name";
     title.textContent = game.name;
     const subtitle = document.createElement("small");
-    subtitle.textContent = game.included ? "Included game" : "Project game · "+themeForGame(game.name)+" theme";
+    subtitle.textContent = gameConsole(game).name + (CONSOLES.needsBios(gameConsole(game),game.file) ? " · BIOS required" : "");
     const actions = document.createElement("div");
     actions.className = "game-actions";
     const play = document.createElement("button");
@@ -804,6 +897,7 @@ async function drawLibrary() {
   }
 }
 $("librarySearch").addEventListener("input",drawLibrary);
+$("librarySystem").addEventListener("change",drawLibrary);
 
 /* -------- SAVE MANAGEMENT -------- */
 
@@ -956,8 +1050,10 @@ window.EJS_Buttons = {
 
 /* -------- HOME SCREEN & GAME LOADING -------- */
 let gameStarted = false;
+let gameLoading = false;
 
 function selectGame(id) {
+  if (gameLoading) {toast("Wait for the selected game to load.");return;}
   if (gameStarted) {
     if (!confirm("Switch games? Save your current progress first.")) return;
     localStorage.setItem("gba-selected",id);
@@ -976,15 +1072,15 @@ $("homeButton").onclick = () => {
   location.reload();
 };
 $("homeSearch").addEventListener("input",drawHome);
+$("homeSystem").addEventListener("change",drawHome);
 
 function drawHome() {
   const area = $("homeGames");
   area.replaceChildren();
   $("homeMessage").textContent = libraryError ||
     (bundledGames.length ? bundledGames.length + " game" + (bundledGames.length === 1 ? "" : "s") + " available" :
-     "No games listed. Add .gba files to the repository root or games/ folder and run the GitHub Actions workflow.");
-  const q = $("homeSearch").value.toLowerCase().trim();
-  for (const game of bundledGames.filter(g=>g.name.toLowerCase().includes(q))) {
+     "No games listed. Add supported files to the repository root or games/<console>/ folder and run the GitHub Actions workflow.");
+  for (const game of visibleGames($("homeSearch").value,$("homeSystem").value)) {
     const card = document.createElement("div");card.className="game-card";
     const art = document.createElement("div");art.className="game-art";
     const img = document.createElement("img"); img.alt=game.name;
@@ -993,7 +1089,7 @@ function drawHome() {
     art.append(img);
     const info = document.createElement("div");info.className="game-info";
     const title=document.createElement("div");title.className="game-name";title.textContent=game.name;
-    const detail=document.createElement("small"); detail.textContent=themeForGame(game.name)+" theme";
+    const detail=document.createElement("small"); detail.textContent=gameConsole(game).name + (CONSOLES.needsBios(gameConsole(game),game.file) ? " · BIOS required" : "");
     const actions=document.createElement("div");actions.className="game-actions";
     const button=document.createElement("button");button.className="primary";button.textContent="▶ Play";
     button.onclick=()=>selectGame(game.id);
@@ -1005,13 +1101,30 @@ function drawHome() {
 }
 
 async function loadGame() {
-  if (gameStarted) return;
+  if (gameStarted || gameLoading) return;
+  gameLoading = true;
+  try {
   let game = bundledGames.find(g => g.id === selectedGame);
   let legacyRecord = null;
   if (!game && selectedGame.startsWith("user:")) {
     try { legacyRecord = await dbGet(selectedGame); } catch(error) {console.warn(error);}
   }
   if (!game && !legacyRecord) {toast("Game is not in this library.");return;}
+  // Old browser-imported records were GBA games; keep their original core and ID.
+  const system = game ? gameConsole(game) : CONSOLES.systemForHint("gba");
+  if (!system) {toast("This console or game format is not supported.");return;}
+  const biosFiles = await window.ConsoleBios.getFiles(system.id);
+  if (CONSOLES.needsBios(system,game?.file || "") && !biosFiles.length && !game?.bios) {
+    openDialog("settingsDialog");
+    $("biosSystem").value = system.id;
+    await drawBiosStatus();
+    $("biosStatus").textContent = "Add the BIOS for " + system.name + ", then select this game again.";
+    $("biosFiles").focus();
+    return;
+  }
+  const biosConfig = window.ConsoleBios.createConfig(system,biosFiles,blob => {
+    const url = URL.createObjectURL(blob); biosURLs.push(url); return url;
+  });
   let url,name,icon;
   if (legacyRecord) {
     romURL = URL.createObjectURL(legacyRecord.blob);
@@ -1027,11 +1140,16 @@ async function loadGame() {
   $("gameTitle").textContent=name;
   $("footerGame").textContent=name;
   setGameIcon(icon,name);
-  document.title=name+" | GBA Game Hub";
+  $("consoleSubtitle").textContent = system.name + " · Personal Game Hub";
+  document.title=name+" | Retro Game Hub";
   // The original ID formula is preserved to avoid breaking existing saves.
   window.EJS_gameName=name;
   window.EJS_gameID=hashGame(selectedGame);
   window.EJS_gameUrl=url;
+  window.EJS_core=system.id;
+  window.EJS_biosUrl=game?.bios || biosConfig.biosUrl;
+  window.EJS_externalFiles={...game?.externalFiles,...biosConfig.externalFiles};
+  window.EJS_disableCue=CONSOLES.extension(game?.file || "") === "cue" ? true : undefined;
   await drawLibrary();
   const script=document.createElement("script");
   script.src=window.EJS_pathtodata+"loader.js";
@@ -1039,6 +1157,10 @@ async function loadGame() {
   document.body.append(script);
   let attempts=0;
   const check=setInterval(()=>{attempts++;if(applySpeed()||attempts>=90)clearInterval(check);},1000);
+  } catch(error) {
+    toast("Unable to start game: " + error.message);
+    console.warn("Game loading:",error);
+  } finally { gameLoading = false; }
 }
 updateTurboUI();
 $("turbo").disabled=true;

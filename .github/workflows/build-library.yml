@@ -1,5 +1,5 @@
 
-name: Build and Deploy GBA Library
+name: Build and Deploy Game Library
 
 on:
   push:

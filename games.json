@@ -3,36 +3,42 @@
     "id": "user:pokemon - firered version (usa).gba",
     "name": "Pokemon - FireRed Version (USA)",
     "file": "Pokemon%20-%20FireRed%20Version%20(USA).gba",
-    "icon": "Pokemon%20-%20FireRed%20Version%20(USA).ico"
+    "icon": "Pokemon%20-%20FireRed%20Version%20(USA).ico",
+    "system": "gba"
   },
   {
     "id": "user:pokemon - leafgreen version (usa).gba",
     "name": "Pokemon - LeafGreen Version (USA)",
     "file": "Pokemon%20-%20LeafGreen%20Version%20(USA).gba",
-    "icon": "Pokemon%20-%20LeafGreen%20Version%20(USA)ico"
+    "icon": "Pokemon%20-%20LeafGreen%20Version%20(USA)ico",
+    "system": "gba"
   },
   {
     "id": "user:pokemon - ruby version (usa).gba",
     "name": "Pokemon - Ruby Version (USA)",
     "file": "Pokemon%20-%20Ruby%20Version%20(USA).gba",
-    "icon": "Pokemon%20-%20Ruby%20Version%20(USA).ico"
+    "icon": "Pokemon%20-%20Ruby%20Version%20(USA).ico",
+    "system": "gba"
   },
   {
     "id": "user:pokemon - sapphire version (usa).gba",
     "name": "Pokemon - Sapphire Version (USA)",
     "file": "Pokemon%20-%20Sapphire%20Version%20(USA).gba",
-    "icon": "Pokemon%20-%20Sapphire%20Version%20(USA).ico"
+    "icon": "Pokemon%20-%20Sapphire%20Version%20(USA).ico",
+    "system": "gba"
   },
   {
     "id": "emerald",
     "name": "Pokémon Emerald",
     "file": "PokemonEmerald.gba",
-    "icon": "PokemonEmerald.ico"
+    "icon": "PokemonEmerald.ico",
+    "system": "gba"
   },
   {
     "id": "user:sonic advance (usa) (en,ja).gba",
     "name": "Sonic Advance (USA) (En,Ja)",
     "file": "Sonic%20Advance%20(USA)%20(En%2CJa).gba",
-    "icon": "Sonic%20Advance%20(USA)%20(En%2CJa).ico"
+    "icon": "Sonic%20Advance%20(USA)%20(En%2CJa).ico",
+    "system": "gba"
   }
 ]
