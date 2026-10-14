@@ -10,49 +10,15 @@
 <style>
 :root {
   color-scheme:dark;
-  --bg:#0b1224;
-  --panel:#131f36;
-  --panel2:#1b2b46;
-  --accent:#91baff;
-  --line:#344b70;
-  --text:#f2f6ff;
-  --muted:#afbed8;
-  --button:#243858;
-  --hover:#324c73;
-}
-
-:root[data-theme="dark"] {
-  --bg:#101217;
-  --panel:#1a1d25;
-  --panel2:#242935;
-  --accent:#b8c5db;
-  --line:#414856;
-  --text:#f5f7ff;
-  --muted:#aeb8c9;
-  --button:#2c3240;
-  --hover:#3b4556;
-}
-:root[data-theme="sapphire"] {
-  --bg:#0c152b;
-  --panel:#142442;
-  --panel2:#1c3355;
-  --accent:#72bbff;
-  --line:#355b88;
-  --text:#edf7ff;
-  --muted:#a8c5e5;
-  --button:#244365;
-  --hover:#345982;
-}
-:root[data-theme="amethyst"] {
-  --bg:#191126;
-  --panel:#281c3b;
-  --panel2:#342449;
-  --accent:#cb9bff;
-  --line:#60457d;
-  --text:#faf2ff;
-  --muted:#ccb6dc;
-  --button:#49335d;
-  --hover:#604377;
+  --bg:#121417;
+  --panel:#1b1f24;
+  --panel2:#242a31;
+  --accent:#8b949e;
+  --line:#3b424b;
+  --text:#f1f3f5;
+  --muted:#aab2bd;
+  --button:#242a31;
+  --hover:#303740;
 }
 
 * {box-sizing:border-box}
@@ -246,11 +212,7 @@ input[type="file"] {max-width:100%;font-size:12px}
 .theme-choice.selected {
   border:2px solid var(--accent);
 }
-.swatch {width:21px;height:21px;border-radius:6px;flex-shrink:0}
-.swatch.emerald {background:#35c77c}
-.swatch.dark {background:#8993a6}
-.swatch.sapphire {background:#398fff}
-.swatch.amethyst {background:#b273ee}
+.swatch {width:21px;height:21px;border-radius:6px;flex-shrink:0;background:var(--accent)}
 .shortcut {
   display:flex;
   justify-content:space-between;
@@ -373,7 +335,7 @@ kbd {
       <div id="game"></div>
       <div id="homeScreen" class="home-screen">
         <div class="home-top"><div class="home-kicker">YOUR GAME COLLECTION</div><h2>Choose Your Adventure</h2>
-        <p class="note">Pick a game to start. Its artwork and website theme will update automatically.</p></div>
+        <p class="note">Pick a game to start. Enjoy your collection in a neutral retro-gaming hub.</p></div>
         <input class="library-search" id="homeSearch" type="search" placeholder="Search your games..." aria-label="Search games">
         <div id="homeMessage" class="status" role="status"></div>
         <div class="game-grid" id="homeGames"></div>
@@ -414,8 +376,8 @@ kbd {
     </div>
 
     <div class="group">
-      <h3>🎨 Automatic Game Theme</h3>
-      <p>The website automatically recognizes the selected game's filename and picks a matching color palette and icon. FireRed goes red, Sapphire goes blue, Emerald goes green, and other games get their own consistent color.</p>
+      <h3>🎨 Neutral Dark Theme</h3>
+      <p>Every game uses the same neutral dark palette. Game artwork, header icons, and favicons still match the selected game.</p>
       <p class="note">Add .gba files and optional matching .ico icons to the repository root or <code>games/</code> folder. On a push to <code>main</code>, GitHub Actions runs <code>node generate-library.cjs</code> and publishes the updated library to GitHub Pages. In repository Settings → Pages, set Source to GitHub Actions.</p>
     </div>
 
@@ -525,43 +487,16 @@ let selectedGame = localStorage.getItem("gba-selected") || "emerald";
 let toastTimer = null;
 const coverURLs = [];
 
-/* -------- AUTOMATIC GAME THEMES -------- */
-const GAME_PALETTES = {
-  sonic:    {bg:"#09152c",panel:"#12264a",panel2:"#1b3560",accent:"#65a7ff",line:"#365c91",text:"#f0f6ff",muted:"#adc7ec",button:"#234779",hover:"#315e99"},
-  emerald:  {bg:"#0c1712",panel:"#172b1f",panel2:"#203b2a",accent:"#65d998",line:"#355442",text:"#f4fff8",muted:"#acc6b5",button:"#253f30",hover:"#365a41"},
-  firered:  {bg:"#220f0b",panel:"#381c14",panel2:"#51291b",accent:"#ff915e",line:"#85452e",text:"#fff4ed",muted:"#e3bca5",button:"#5c3020",hover:"#71402a"},
-  ruby:     {bg:"#200d18",panel:"#351825",panel2:"#4c2233",accent:"#ff6b88",line:"#79374b",text:"#fff2f7",muted:"#dfb5c8",button:"#572738",hover:"#6c3446"},
-  sapphire: {bg:"#0c152b",panel:"#142442",panel2:"#1c3355",accent:"#72bbff",line:"#355b88",text:"#edf7ff",muted:"#a8c5e5",button:"#244365",hover:"#345982"},
-  leafgreen:{bg:"#102219",panel:"#1a3526",panel2:"#264734",accent:"#8bed9c",line:"#427555",text:"#f1fff4",muted:"#b5d8c0",button:"#31563e",hover:"#40744f"},
-  gold:     {bg:"#201909",panel:"#393018",panel2:"#4a3a20",accent:"#ffd15b",line:"#7f6530",text:"#fff9e8",muted:"#dfcba4",button:"#594826",hover:"#715b2e"},
-  silver:   {bg:"#13171e",panel:"#202732",panel2:"#2b3542",accent:"#c4d5ea",line:"#526176",text:"#f4f7fb",muted:"#b6c3d4",button:"#384557",hover:"#4a5870"}
+/* -------- NEUTRAL GAME THEME -------- */
+const GAME_PALETTE = {
+  bg:"#121417",panel:"#1b1f24",panel2:"#242a31",accent:"#8b949e",
+  line:"#3b424b",text:"#f1f3f5",muted:"#aab2bd",button:"#242a31",hover:"#303740"
 };
-function themeForGame(name) {
-  const n = name.toLowerCase().replace(/[^a-z0-9]/g,"");
-  if (n.includes("sonicadvance")) return "sonic";
-  if (n.includes("firered")) return "firered";
-  if (n.includes("leafgreen")) return "leafgreen";
-  if (n.includes("sapphire")) return "sapphire";
-  if (n.includes("emerald")) return "emerald";
-  if (n.includes("ruby")) return "ruby";
-  if (n.includes("gold")) return "gold";
-  if (n.includes("silver")) return "silver";
-  return "custom";
+function themeForGame() {
+  return "neutral";
 }
-function colorsForGame(name) {
-  const theme = themeForGame(name);
-  let colors = GAME_PALETTES[theme];
-  if (!colors) {
-    const hue = hashGame(name.toLowerCase()) % 360;
-    colors = {
-      bg:`hsl(${hue} 36% 8%)`, panel:`hsl(${hue} 31% 15%)`,
-      panel2:`hsl(${hue} 32% 21%)`, accent:`hsl(${hue} 85% 72%)`,
-      line:`hsl(${hue} 32% 31%)`, text:"#f7faff",
-      muted:`hsl(${hue} 22% 77%)`, button:`hsl(${hue} 33% 25%)`,
-      hover:`hsl(${hue} 34% 32%)`
-    };
-  }
-  return colors;
+function colorsForGame() {
+  return GAME_PALETTE;
 }
 function applyGameTheme(name) {
   const colors = colorsForGame(name);
@@ -574,7 +509,7 @@ function applyGameTheme(name) {
 function fallbackGameIcon(name) {
   const accent = colorsForGame(name).accent;
   return "data:image/svg+xml," + encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="3" y="15" width="58" height="36" rx="12" fill="${accent}"/><rect x="21" y="20" width="24" height="23" rx="3" fill="#101a2c"/><path d="M13 27v12M7 33h12" stroke="#101a2c" stroke-width="4"/><circle cx="52" cy="28" r="3" fill="#101a2c"/><circle cx="54" cy="37" r="3" fill="#101a2c"/></svg>`
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="3" y="15" width="58" height="36" rx="12" fill="${accent}"/><rect x="21" y="20" width="24" height="23" rx="3" fill="#121417"/><path d="M13 27v12M7 33h12" stroke="#121417" stroke-width="4"/><circle cx="52" cy="28" r="3" fill="#121417"/><circle cx="54" cy="37" r="3" fill="#121417"/></svg>`
   );
 }
 function setGameIcon(icon,name) {
@@ -999,7 +934,7 @@ window.EJS_core = "gba";
 window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
 window.EJS_startOnLoaded = true;
 window.EJS_browserMode = "desktop";
-window.EJS_color = "#91baff";
+window.EJS_color = "#8b949e";
 
 window.EJS_Buttons = {
   settings:true,
