@@ -1,0 +1,26 @@
+[
+  {
+    "id": "user:pokemon - firered version (usa).gba",
+    "name": "Pokemon - FireRed Version (USA)",
+    "file": "Pokemon%20-%20FireRed%20Version%20(USA).gba",
+    "icon": "Pokemon%20-%20FireRed%20Version%20(USA).ico"
+  },
+  {
+    "id": "user:pokemon - leafgreen version (usa).gba",
+    "name": "Pokemon - LeafGreen Version (USA)",
+    "file": "Pokemon%20-%20LeafGreen%20Version%20(USA).gba",
+    "icon": "PokemonEmerald.ico"
+  },
+  {
+    "id": "user:pokemon - ruby version (usa).gba",
+    "name": "Pokemon - Ruby Version (USA)",
+    "file": "Pokemon%20-%20Ruby%20Version%20(USA).gba",
+    "icon": "Pokemon%20-%20Ruby%20Version%20(USA).ico"
+  },
+  {
+    "id": "user:pokemon - sapphire version (usa).gba",
+    "name": "Pokemon - Sapphire Version (USA)",
+    "file": "Pokemon%20-%20Sapphire%20Version%20(USA).gba",
+    "icon": "Pokemon%20-%20Sapphire%20Version%20(USA).ico"
+  }
+]
