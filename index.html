@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pokémon Emerald | Game Hub</title>
-<link rel="icon" type="image/x-icon" href="/3ds-racer.ico?v=3">
+<link id="siteFavicon" rel="icon" type="image/x-icon" href="./emerald.ico">
 
 <style>
 :root {
@@ -338,7 +338,7 @@ kbd {
 <div class="app">
   <header>
     <div class="brand">
-      <img src="./emerald.ico" alt="Emerald">
+      <img id="brandIcon" src="./emerald.ico" alt="Game icon">
       <div>
         <h1 id="gameTitle">Pokémon Emerald</h1>
         <div class="subtitle">Game Boy Advance · Personal Game Hub</div>
@@ -393,22 +393,9 @@ kbd {
     </div>
 
     <div class="group">
-      <h3>🎨 Appearance</h3>
-      <p>Choose your preferred theme. This changes the website, not the Pokémon game's graphics.</p>
-      <div class="theme-grid">
-        <button class="theme-choice" data-theme-choice="emerald">
-          <span class="swatch emerald"></span>Emerald Green
-        </button>
-        <button class="theme-choice" data-theme-choice="dark">
-          <span class="swatch dark"></span>Midnight
-        </button>
-        <button class="theme-choice" data-theme-choice="sapphire">
-          <span class="swatch sapphire"></span>Sapphire Blue
-        </button>
-        <button class="theme-choice" data-theme-choice="amethyst">
-          <span class="swatch amethyst"></span>Amethyst
-        </button>
-      </div>
+      <h3>🎨 Automatic Game Theme</h3>
+      <p>The website automatically recognizes the selected game's filename and picks a matching color palette and icon. FireRed goes red, Sapphire goes blue, Emerald goes green, and other games get their own consistent color.</p>
+      <p class="note">To add a game permanently, upload its .gba file and optional matching .ico to the <code>games/</code> folder in your project. The library updates when Netlify rebuilds your site.</p>
     </div>
 
     <div class="group">
@@ -437,28 +424,11 @@ kbd {
     <button data-close="libraryDialog">✕ Close</button>
   </div>
   <div class="modal-body">
-    <p class="note">
-      Emerald is your default game. Added games and their custom cover artwork are stored in this browser, not uploaded to your website.
-    </p>
-
+    <p class="note">Games listed here come from your website project. Add any supported <code>.gba</code> file to the <code>games/</code> folder. Put a matching <code>.ico</code> there to use it as the game's icon. No browser uploads necessary.</p>
     <input class="library-search" type="search" id="librarySearch"
            placeholder="Search your games..." aria-label="Search games">
-
     <div class="game-grid" id="games"></div>
-
-    <div class="group" style="margin-top:14px">
-      <h3>Add a GBA Game</h3>
-      <p>Choose a .gba file from your device.</p>
-      <input id="addRom" type="file" accept=".gba">
-
-      <p>Optional: Choose a cover image for the game.</p>
-      <input id="addCover" type="file" accept="image/png,image/jpeg,image/webp">
-
-      <div style="margin-top:12px">
-        <button class="primary" id="addGameButton">Add to Library</button>
-      </div>
-      <div id="libraryStatus" class="status" role="status"></div>
-    </div>
+    <div id="libraryStatus" class="status" role="status"></div>
   </div>
 </dialog>
 
@@ -534,30 +504,46 @@ let selectedGame = localStorage.getItem("gba-selected") || "emerald";
 let toastTimer = null;
 const coverURLs = [];
 
-/* -------- APPEARANCE -------- */
-
-const THEMES = ["emerald","dark","sapphire","amethyst"];
-
-function setTheme(theme) {
-  if (!THEMES.includes(theme)) theme = "emerald";
-  document.documentElement.dataset.theme = theme;
-  localStorage.setItem("emerald-hub-theme",theme);
-
-  document.querySelectorAll("[data-theme-choice]").forEach(button => {
-    button.classList.toggle(
-      "selected",button.dataset.themeChoice === theme
-    );
-  });
+/* -------- AUTOMATIC GAME THEMES -------- */
+const GAME_PALETTES = {
+  emerald:  {bg:"#0c1712",panel:"#172b1f",panel2:"#203b2a",accent:"#65d998",line:"#355442",text:"#f4fff8",muted:"#acc6b5",button:"#253f30",hover:"#365a41"},
+  firered:  {bg:"#220e14",panel:"#371923",panel2:"#51232c",accent:"#ff6670",line:"#853a45",text:"#fff2f2",muted:"#e3b5b9",button:"#5c2a32",hover:"#71323e"},
+  ruby:     {bg:"#200d18",panel:"#351825",panel2:"#4c2233",accent:"#ff6b88",line:"#79374b",text:"#fff2f7",muted:"#dfb5c8",button:"#572738",hover:"#6c3446"},
+  sapphire: {bg:"#0c152b",panel:"#142442",panel2:"#1c3355",accent:"#72bbff",line:"#355b88",text:"#edf7ff",muted:"#a8c5e5",button:"#244365",hover:"#345982"},
+  leafgreen:{bg:"#102219",panel:"#1a3526",panel2:"#264734",accent:"#8bed9c",line:"#427555",text:"#f1fff4",muted:"#b5d8c0",button:"#31563e",hover:"#40744f"},
+  gold:     {bg:"#201909",panel:"#393018",panel2:"#4a3a20",accent:"#ffd15b",line:"#7f6530",text:"#fff9e8",muted:"#dfcba4",button:"#594826",hover:"#715b2e"},
+  silver:   {bg:"#13171e",panel:"#202732",panel2:"#2b3542",accent:"#c4d5ea",line:"#526176",text:"#f4f7fb",muted:"#b6c3d4",button:"#384557",hover:"#4a5870"}
+};
+function themeForGame(name) {
+  const n = name.toLowerCase().replace(/[^a-z0-9]/g,"");
+  if (n.includes("firered")) return "firered";
+  if (n.includes("leafgreen")) return "leafgreen";
+  if (n.includes("sapphire") || n.includes("blue")) return "sapphire";
+  if (n.includes("emerald")) return "emerald";
+  if (n.includes("ruby") || n.includes("red")) return "ruby";
+  if (n.includes("gold")) return "gold";
+  if (n.includes("silver")) return "silver";
+  return "custom";
 }
-
-setTheme(localStorage.getItem("emerald-hub-theme") || "emerald");
-
-document.querySelectorAll("[data-theme-choice]").forEach(button => {
-  button.addEventListener("click",() => {
-    setTheme(button.dataset.themeChoice);
-    toast("Theme updated!");
-  });
-});
+function applyGameTheme(name) {
+  const theme = themeForGame(name);
+  let colors = GAME_PALETTES[theme];
+  if (!colors) {
+    const hue = hashGame(name.toLowerCase()) % 360;
+    colors = {
+      bg:`hsl(${hue} 36% 8%)`, panel:`hsl(${hue} 31% 15%)`,
+      panel2:`hsl(${hue} 32% 21%)`, accent:`hsl(${hue} 85% 72%)`,
+      line:`hsl(${hue} 32% 31%)`, text:"#f7faff",
+      muted:`hsl(${hue} 22% 77%)`, button:`hsl(${hue} 33% 25%)`,
+      hover:`hsl(${hue} 34% 32%)`
+    };
+  }
+  delete document.documentElement.dataset.theme;
+  for (const [key,value] of Object.entries(colors)) {
+    document.documentElement.style.setProperty("--"+key,value);
+  }
+  window.EJS_color = colors.accent;
+}
 
 /* -------- NOTIFICATIONS -------- */
 
@@ -761,79 +747,63 @@ $("controllerCheck").onclick = () => {
     : "No controllers detected. Press a controller button and try again.";
 };
 
-/* -------- LIBRARY -------- */
-
+/* -------- PROJECT-BUNDLED GAME LIBRARY -------- */
+let bundledGames = [{id:"emerald",name:"Pokémon Emerald",file:"PokemonEmerald.gba",icon:"emerald.ico",included:true}];
+async function loadProjectLibrary() {
+  try {
+    const response = await fetch("./games.json",{cache:"no-store"});
+    if (!response.ok) throw Error("games.json not found");
+    const list = await response.json();
+    if (!Array.isArray(list)) throw Error("Invalid games.json");
+    const seen = new Set(["emerald"]);
+    for (const game of list) {
+      if (!game || typeof game.id !== "string" ||
+          typeof game.file !== "string" || typeof game.name !== "string") continue;
+      if (!game.file.startsWith("games/") || !/\.gba$/i.test(game.file)) continue;
+      if (seen.has(game.id)) continue;
+      seen.add(game.id);
+      bundledGames.push(game);
+    }
+  } catch(error) {
+    $("libraryStatus").textContent =
+      "Built-in Emerald is ready. To add more project games, include generate-library.cjs and netlify.toml, then redeploy.";
+    console.warn("Game manifest:",error);
+  }
+}
+function gameIconPath(game) {
+  return game.icon || "./emerald.ico";
+}
 async function drawLibrary() {
   const list = $("games");
   list.replaceChildren();
-  coverURLs.forEach(url => URL.revokeObjectURL(url));
-  coverURLs.length = 0;
-
-  let stored;
-  try {
-    stored = await dbAll();
-  } catch (error) {
-    $("libraryStatus").textContent = "Storage error: "+error.message;
-    return;
-  }
-
-  const games = [
-    {id:"emerald",name:"Pokémon Emerald",included:true},
-    ...stored.map(r => ({
-      id:r.id,name:r.name,cover:r.cover,included:false
-    }))
-  ];
-
   const filter = $("librarySearch").value.trim().toLowerCase();
-  const visible = games.filter(g => g.name.toLowerCase().includes(filter));
-
+  const visible = bundledGames.filter(g => g.name.toLowerCase().includes(filter));
   if (!visible.length) {
     const p = document.createElement("p");
     p.className = "note";
-    p.textContent = "No matching games.";
+    p.textContent = "No matching games. Add .gba files to games/ in your website project.";
     list.append(p);
     return;
   }
-
   for (const game of visible) {
     const card = document.createElement("div");
     card.className = "game-card";
-
     const art = document.createElement("div");
     art.className = "game-art";
-
-    if (game.included || game.cover instanceof Blob) {
-      const img = document.createElement("img");
-      if (game.included) {
-        img.src = "./emerald.ico";
-      } else {
-        const url = URL.createObjectURL(game.cover);
-        coverURLs.push(url);
-        img.src = url;
-      }
-      img.alt = game.name;
-      art.append(img);
-    } else {
-      const placeholder = document.createElement("span");
-      placeholder.className = "placeholder";
-      placeholder.textContent = "🎮";
-      art.append(placeholder);
-    }
-
+    const img = document.createElement("img");
+    img.src = gameIconPath(game);
+    img.alt = game.name + " icon";
+    img.onerror = () => { img.onerror = null; img.src = "./emerald.ico"; };
+    art.append(img);
     const info = document.createElement("div");
     info.className = "game-info";
     const title = document.createElement("div");
     title.className = "game-name";
     title.textContent = game.name;
-
     const subtitle = document.createElement("small");
-    subtitle.textContent = game.included
-      ? "Included game"
-      : "Stored on this device";
-
+    subtitle.textContent = game.included ? "Included game" : "Project game · "+themeForGame(game.name)+" theme";
     const actions = document.createElement("div");
     actions.className = "game-actions";
-
     const play = document.createElement("button");
     play.textContent = selectedGame === game.id ? "Playing" : "Play";
     play.disabled = selectedGame === game.id;
@@ -842,58 +812,13 @@ async function drawLibrary() {
       localStorage.setItem("gba-selected",game.id);
       location.reload();
     };
-
     actions.append(play);
     info.append(title,subtitle,actions);
     card.append(art,info);
     list.append(card);
   }
 }
-
 $("librarySearch").addEventListener("input",drawLibrary);
-
-$("addGameButton").onclick = async () => {
-  const file = $("addRom").files[0];
-  const cover = $("addCover").files[0];
-
-  if (!file || !/\.gba$/i.test(file.name)) {
-    $("libraryStatus").textContent = "Choose a .gba file first.";
-    return;
-  }
-
-  if (cover && (!["image/png","image/jpeg","image/webp"].includes(cover.type)
-       || cover.size > 5*1024*1024)) {
-    $("libraryStatus").textContent =
-      "Cover must be PNG, JPG or WebP and under 5 MB.";
-    return;
-  }
-
-  const name = file.name.replace(/\.gba$/i,"");
-  // Preserve the existing IDs for previously imported games.
-  const id = "user:"+file.name.toLowerCase();
-
-  try {
-    $("libraryStatus").textContent = "Adding game...";
-
-    // Preserve an existing custom cover if no new cover was supplied.
-    const old = await dbGet(id);
-    await dbPut({
-      ...(old || {}),
-      id,
-      name,
-      blob:file,
-      cover:cover || old?.cover || null
-    });
-
-    $("libraryStatus").textContent = `${name} added to your library.`;
-    $("addRom").value = "";
-    $("addCover").value = "";
-    await drawLibrary();
-  } catch (error) {
-    $("libraryStatus").textContent =
-      "Could not add game: "+error.message;
-  }
-};
 
 /* -------- SAVE MANAGEMENT -------- */
 
@@ -1047,53 +972,52 @@ window.EJS_Buttons = {
 /* -------- GAME LOADING -------- */
 
 async function loadGame() {
-  let url = "./PokemonEmerald.gba";
-  let name = "Pokemon Emerald";
-  let id = selectedGame;
-
-  if (selectedGame !== "emerald") {
-    try {
-      const record = await dbGet(selectedGame);
-      if (record) {
-        romURL = URL.createObjectURL(record.blob);
-        url = romURL;
-        name = record.name;
-      } else {
-        id = "emerald";
-        selectedGame = "emerald";
-        localStorage.setItem("gba-selected","emerald");
-      }
-    } catch (error) {
-      console.error(error);
-      id = "emerald";
-      selectedGame = "emerald";
-      localStorage.setItem("gba-selected","emerald");
-    }
+  await loadProjectLibrary();
+  let game = bundledGames.find(g => g.id === selectedGame);
+  // Compatibility: keep supporting older browser-imported game saves.
+  let legacyRecord = null;
+  if (!game && selectedGame.startsWith("user:")) {
+    try { legacyRecord = await dbGet(selectedGame); } catch(error) {console.warn(error);}
   }
-
+  if (!game && !legacyRecord) {
+    selectedGame = "emerald";
+    localStorage.setItem("gba-selected","emerald");
+    game = bundledGames[0];
+  }
+  let url, name, icon;
+  if (legacyRecord) {
+    romURL = URL.createObjectURL(legacyRecord.blob);
+    url = romURL;
+    name = legacyRecord.name;
+    icon = "./emerald.ico";
+    bundledGames.push({id:selectedGame,name,file:null,icon,legacy:true});
+  } else {
+    url = "./" + game.file.replace(/^\.\//, "");
+    name = game.name;
+    icon = gameIconPath(game);
+  }
+  applyGameTheme(name);
   $("gameTitle").textContent = name;
   $("footerGame").textContent = name;
-
-  // Preserve previous game IDs and game names.
+  $("brandIcon").src = icon;
+  $("brandIcon").onerror = () => { $("brandIcon").onerror = null; $("brandIcon").src = "./emerald.ico"; };
+  $("siteFavicon").href = icon;
+  document.title = name + " | GBA Game Hub";
+  // CRITICAL: Preserve old IDs, including "emerald" and "user:filename.gba".
   window.EJS_gameName = name;
-  window.EJS_gameID = hashGame(id);
+  window.EJS_gameID = hashGame(selectedGame);
   window.EJS_gameUrl = url;
-
+  await drawLibrary();
   const script = document.createElement("script");
   script.src = window.EJS_pathtodata+"loader.js";
-  script.onerror = () => {
-    $("game").textContent =
-      "Unable to load EmulatorJS. Check your connection.";
-  };
+  script.onerror = () => { $("game").textContent = "Unable to load EmulatorJS. Check your connection."; };
   document.body.append(script);
-
   let attempts = 0;
   const check = setInterval(() => {
     attempts++;
     if (applySpeed() || attempts >= 90) clearInterval(check);
   },1000);
 }
-
 updateTurboUI();
 loadGame();
 </script>
