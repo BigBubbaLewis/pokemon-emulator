@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pokémon Emerald | Game Hub</title>
+<title>GBA Game Hub | Choose a Game</title>
 <link id="siteFavicon" rel="icon" type="image/x-icon" href="./PokemonEmerald.ico">
 
 <style>
@@ -340,12 +340,13 @@ kbd {
     <div class="brand">
       <img id="brandIcon" src="./PokemonEmerald.ico" alt="Game icon">
       <div>
-        <h1 id="gameTitle">Pokémon Emerald</h1>
+        <h1 id="gameTitle">GBA Game Hub</h1>
         <div class="subtitle">Game Boy Advance · Personal Game Hub</div>
       </div>
     </div>
 
     <nav aria-label="Game tools">
+      <button id="homeButton" title="Return to game selection">Home</button>
       <button id="turbo" title="Shift + F">Fast Forward</button>
       <button id="libraryOpen" title="Shift + L">Library</button>
       <button id="savesOpen" title="Shift + S">Saves</button>
@@ -357,12 +358,19 @@ kbd {
   <main class="workspace">
     <div id="screen">
       <div id="game"></div>
+      <div id="homeScreen" class="home-screen">
+        <div class="home-top"><div class="home-kicker">YOUR GAME COLLECTION</div><h2>Choose Your Adventure</h2>
+        <p class="note">Pick a game to start. Its artwork and website theme will update automatically.</p></div>
+        <input class="library-search" id="homeSearch" type="search" placeholder="Search your games..." aria-label="Search games">
+        <div id="homeMessage" class="status" role="status"></div>
+        <div class="game-grid" id="homeGames"></div>
+      </div>
       <button id="fullscreenTurbo">Fast Forward</button>
     </div>
   </main>
 
   <footer>
-    <span>Game: <strong id="footerGame">Emerald</strong></span>
+    <span>Game: <strong id="footerGame">Choose a game</strong></span>
     <span>Speed: <strong id="footerSpeed">1×</strong></span>
     <span>Shortcuts: <strong>Shift + F / Shift + L / Alt + Enter</strong></span>
   </footer>
@@ -749,12 +757,14 @@ $("controllerCheck").onclick = () => {
 
 /* -------- PROJECT-BUNDLED GAME LIBRARY -------- */
 let bundledGames = [{id:"emerald",name:"Pokémon Emerald",file:"PokemonEmerald.gba",icon:"PokemonEmerald.ico",included:true}];
+let libraryError = "";
 async function loadProjectLibrary() {
   try {
     const response = await fetch("./games.json",{cache:"no-store"});
     if (!response.ok) throw Error("games.json not found");
     const list = await response.json();
     if (!Array.isArray(list)) throw Error("Invalid games.json");
+    libraryError = "";
     const seen = new Set(["emerald"]);
     for (const game of list) {
       if (!game || typeof game.id !== "string" ||
@@ -765,8 +775,8 @@ async function loadProjectLibrary() {
       bundledGames.push(game);
     }
   } catch(error) {
-    $("libraryStatus").textContent =
-      "Built-in Emerald is ready. To add more project games, include generate-library.cjs and netlify.toml, then redeploy.";
+    libraryError = "Game list wasn't generated: " + error.message + ". In Netlify deploy logs, check that 'node generate-library.cjs' ran and found your games folder.";
+    $("libraryStatus").textContent = libraryError;
     console.warn("Game manifest:",error);
   }
 }
@@ -805,13 +815,9 @@ async function drawLibrary() {
     const actions = document.createElement("div");
     actions.className = "game-actions";
     const play = document.createElement("button");
-    play.textContent = selectedGame === game.id ? "Playing" : "Play";
-    play.disabled = selectedGame === game.id;
-    play.onclick = () => {
-      if (!confirm("Switch games? Make sure your current game is saved.")) return;
-      localStorage.setItem("gba-selected",game.id);
-      location.reload();
-    };
+    play.textContent = selectedGame === game.id && gameStarted ? "Playing" : "Play";
+    play.disabled = selectedGame === game.id && gameStarted;
+    play.onclick = () => selectGame(game.id);
     actions.append(play);
     info.append(title,subtitle,actions);
     card.append(art,info);
@@ -969,57 +975,94 @@ window.EJS_Buttons = {
   loadSavFiles:false
 };
 
-/* -------- GAME LOADING -------- */
+/* -------- HOME SCREEN & GAME LOADING -------- */
+let gameStarted = false;
+
+function selectGame(id) {
+  if (gameStarted) {
+    if (!confirm("Switch games? Save your current progress first.")) return;
+    localStorage.setItem("gba-selected",id);
+    location.reload();
+    return;
+  }
+  selectedGame = id;
+  localStorage.setItem("gba-selected",id);
+  loadGame();
+}
+
+$("homeButton").onclick = () => {
+  if (gameStarted && !confirm("Return to the library? Save your current game first.")) return;
+  location.reload();
+};
+$("homeSearch").addEventListener("input",drawHome);
+
+function drawHome() {
+  const area = $("homeGames");
+  area.replaceChildren();
+  $("homeMessage").textContent = libraryError ||
+    (bundledGames.length === 1 ? "Only Emerald is showing. Check your Netlify deploy log to confirm the games manifest was generated." :
+     bundledGames.length + " games available");
+  const q = $("homeSearch").value.toLowerCase().trim();
+  for (const game of bundledGames.filter(g=>g.name.toLowerCase().includes(q))) {
+    const card = document.createElement("div");card.className="game-card";
+    const art = document.createElement("div");art.className="game-art";
+    const img = document.createElement("img"); img.alt=game.name;
+    img.src=gameIconPath(game);
+    img.onerror=()=>{img.onerror=null;img.src="./PokemonEmerald.ico";};
+    art.append(img);
+    const info = document.createElement("div");info.className="game-info";
+    const title=document.createElement("div");title.className="game-name";title.textContent=game.name;
+    const detail=document.createElement("small"); detail.textContent=themeForGame(game.name)+" theme";
+    const actions=document.createElement("div");actions.className="game-actions";
+    const button=document.createElement("button");button.className="primary";button.textContent="▶ Play";
+    button.onclick=()=>selectGame(game.id);
+    actions.append(button);info.append(title,detail,actions);card.append(art,info);
+    card.onclick=e=>{if(!e.target.closest("button"))selectGame(game.id);};
+    area.append(card);
+  }
+  if (!area.children.length) area.textContent="No matching games.";
+}
 
 async function loadGame() {
-  await loadProjectLibrary();
+  if (gameStarted) return;
   let game = bundledGames.find(g => g.id === selectedGame);
-  // Compatibility: keep supporting older browser-imported game saves.
   let legacyRecord = null;
   if (!game && selectedGame.startsWith("user:")) {
     try { legacyRecord = await dbGet(selectedGame); } catch(error) {console.warn(error);}
   }
-  if (!game && !legacyRecord) {
-    selectedGame = "emerald";
-    localStorage.setItem("gba-selected","emerald");
-    game = bundledGames[0];
-  }
-  let url, name, icon;
+  if (!game && !legacyRecord) {toast("Game is not in this library.");return;}
+  let url,name,icon;
   if (legacyRecord) {
     romURL = URL.createObjectURL(legacyRecord.blob);
-    url = romURL;
-    name = legacyRecord.name;
-    icon = "./PokemonEmerald.ico";
-    bundledGames.push({id:selectedGame,name,file:null,icon,legacy:true});
+    url=romURL;name=legacyRecord.name;icon="./PokemonEmerald.ico";
   } else {
-    url = "./" + game.file.replace(/^\.\//, "");
-    name = game.name;
-    icon = gameIconPath(game);
+    url="./"+game.file.replace(/^\.\//,"");name=game.name;icon=gameIconPath(game);
   }
+  gameStarted=true;
+  $("homeScreen").classList.add("hidden");
+  $("turbo").disabled=false;
   applyGameTheme(name);
-  $("gameTitle").textContent = name;
-  $("footerGame").textContent = name;
-  $("brandIcon").src = icon;
-  $("brandIcon").onerror = () => { $("brandIcon").onerror = null; $("brandIcon").src = "./PokemonEmerald.ico"; };
-  $("siteFavicon").href = icon;
-  document.title = name + " | GBA Game Hub";
-  // CRITICAL: Preserve old IDs, including "emerald" and "user:filename.gba".
-  window.EJS_gameName = name;
-  window.EJS_gameID = hashGame(selectedGame);
-  window.EJS_gameUrl = url;
+  $("gameTitle").textContent=name;
+  $("footerGame").textContent=name;
+  $("brandIcon").src=icon;
+  $("brandIcon").onerror=()=>{$("brandIcon").onerror=null;$("brandIcon").src="./PokemonEmerald.ico";};
+  $("siteFavicon").href=icon;
+  document.title=name+" | GBA Game Hub";
+  // The original ID formula is preserved to avoid breaking existing saves.
+  window.EJS_gameName=name;
+  window.EJS_gameID=hashGame(selectedGame);
+  window.EJS_gameUrl=url;
   await drawLibrary();
-  const script = document.createElement("script");
-  script.src = window.EJS_pathtodata+"loader.js";
-  script.onerror = () => { $("game").textContent = "Unable to load EmulatorJS. Check your connection."; };
+  const script=document.createElement("script");
+  script.src=window.EJS_pathtodata+"loader.js";
+  script.onerror=()=>{ $("game").textContent="Unable to load EmulatorJS. Check your connection."; };
   document.body.append(script);
-  let attempts = 0;
-  const check = setInterval(() => {
-    attempts++;
-    if (applySpeed() || attempts >= 90) clearInterval(check);
-  },1000);
+  let attempts=0;
+  const check=setInterval(()=>{attempts++;if(applySpeed()||attempts>=90)clearInterval(check);},1000);
 }
 updateTurboUI();
-loadGame();
+$("turbo").disabled=true;
+(async()=>{await loadProjectLibrary();drawHome();await drawLibrary();})();
 </script>
 </body>
 </html>
