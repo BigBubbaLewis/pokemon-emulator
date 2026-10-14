@@ -527,6 +527,7 @@ const coverURLs = [];
 
 /* -------- AUTOMATIC GAME THEMES -------- */
 const GAME_PALETTES = {
+  sonic:    {bg:"#09152c",panel:"#12264a",panel2:"#1b3560",accent:"#65a7ff",line:"#365c91",text:"#f0f6ff",muted:"#adc7ec",button:"#234779",hover:"#315e99"},
   emerald:  {bg:"#0c1712",panel:"#172b1f",panel2:"#203b2a",accent:"#65d998",line:"#355442",text:"#f4fff8",muted:"#acc6b5",button:"#253f30",hover:"#365a41"},
   firered:  {bg:"#220f0b",panel:"#381c14",panel2:"#51291b",accent:"#ff915e",line:"#85452e",text:"#fff4ed",muted:"#e3bca5",button:"#5c3020",hover:"#71402a"},
   ruby:     {bg:"#200d18",panel:"#351825",panel2:"#4c2233",accent:"#ff6b88",line:"#79374b",text:"#fff2f7",muted:"#dfb5c8",button:"#572738",hover:"#6c3446"},
@@ -537,6 +538,7 @@ const GAME_PALETTES = {
 };
 function themeForGame(name) {
   const n = name.toLowerCase().replace(/[^a-z0-9]/g,"");
+  if (n.includes("sonicadvance")) return "sonic";
   if (n.includes("firered")) return "firered";
   if (n.includes("leafgreen")) return "leafgreen";
   if (n.includes("sapphire")) return "sapphire";
