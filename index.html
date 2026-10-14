@@ -769,7 +769,7 @@ async function loadProjectLibrary() {
     for (const game of list) {
       if (!game || typeof game.id !== "string" ||
           typeof game.file !== "string" || typeof game.name !== "string") continue;
-      if (!game.file.startsWith("games/") || !/\.gba$/i.test(game.file)) continue;
+      if (!/\.gba$/i.test(game.file)) continue;
       if (seen.has(game.id)) continue;
       seen.add(game.id);
       bundledGames.push(game);
