@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pokémon Emerald | Game Hub</title>
-<link id="siteFavicon" rel="icon" type="image/x-icon" href="./emerald.ico">
+<link id="siteFavicon" rel="icon" type="image/x-icon" href="./PokemonEmerald.ico">
 
 <style>
 :root {
@@ -338,7 +338,7 @@ kbd {
 <div class="app">
   <header>
     <div class="brand">
-      <img id="brandIcon" src="./emerald.ico" alt="Game icon">
+      <img id="brandIcon" src="./PokemonEmerald.ico" alt="Game icon">
       <div>
         <h1 id="gameTitle">Pokémon Emerald</h1>
         <div class="subtitle">Game Boy Advance · Personal Game Hub</div>
@@ -748,7 +748,7 @@ $("controllerCheck").onclick = () => {
 };
 
 /* -------- PROJECT-BUNDLED GAME LIBRARY -------- */
-let bundledGames = [{id:"emerald",name:"Pokémon Emerald",file:"PokemonEmerald.gba",icon:"emerald.ico",included:true}];
+let bundledGames = [{id:"emerald",name:"Pokémon Emerald",file:"PokemonEmerald.gba",icon:"PokemonEmerald.ico",included:true}];
 async function loadProjectLibrary() {
   try {
     const response = await fetch("./games.json",{cache:"no-store"});
@@ -771,7 +771,7 @@ async function loadProjectLibrary() {
   }
 }
 function gameIconPath(game) {
-  return game.icon || "./emerald.ico";
+  return game.icon || "./PokemonEmerald.ico";
 }
 async function drawLibrary() {
   const list = $("games");
@@ -793,7 +793,7 @@ async function drawLibrary() {
     const img = document.createElement("img");
     img.src = gameIconPath(game);
     img.alt = game.name + " icon";
-    img.onerror = () => { img.onerror = null; img.src = "./emerald.ico"; };
+    img.onerror = () => { img.onerror = null; img.src = "./PokemonEmerald.ico"; };
     art.append(img);
     const info = document.createElement("div");
     info.className = "game-info";
@@ -989,7 +989,7 @@ async function loadGame() {
     romURL = URL.createObjectURL(legacyRecord.blob);
     url = romURL;
     name = legacyRecord.name;
-    icon = "./emerald.ico";
+    icon = "./PokemonEmerald.ico";
     bundledGames.push({id:selectedGame,name,file:null,icon,legacy:true});
   } else {
     url = "./" + game.file.replace(/^\.\//, "");
@@ -1000,7 +1000,7 @@ async function loadGame() {
   $("gameTitle").textContent = name;
   $("footerGame").textContent = name;
   $("brandIcon").src = icon;
-  $("brandIcon").onerror = () => { $("brandIcon").onerror = null; $("brandIcon").src = "./emerald.ico"; };
+  $("brandIcon").onerror = () => { $("brandIcon").onerror = null; $("brandIcon").src = "./PokemonEmerald.ico"; };
   $("siteFavicon").href = icon;
   document.title = name + " | GBA Game Hub";
   // CRITICAL: Preserve old IDs, including "emerald" and "user:filename.gba".
